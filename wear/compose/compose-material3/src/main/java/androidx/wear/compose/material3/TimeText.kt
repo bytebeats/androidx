@@ -176,10 +176,8 @@ sealed class TimeTextScope {
 
 /** Contains the default values used by [TimeText]. */
 object TimeTextDefaults {
-
-    /** By default, TimeText has 2.dp screen padding from the top. */
-    private val Padding = 2.dp
-
+    /** The default padding from the edge of the screen. */
+    private val Padding = ScaffoldDefaults.edgePadding
     /** Default format for 24h clock. */
     const val TimeFormat24Hours = "HH:mm"
 
@@ -211,7 +209,7 @@ object TimeTextDefaults {
 
     /**
      * Creates a [TextStyle] with default parameters used for showing time on square screens. By
-     * default a copy of MaterialTheme.typography.labelSmall style is created.
+     * default a copy of MaterialTheme.typography.arcMedium style is created.
      *
      * @param background The background color.
      * @param color The main color.
@@ -223,7 +221,7 @@ object TimeTextDefaults {
         color: Color = MaterialTheme.colorScheme.onBackground,
         fontSize: TextUnit = TextUnit.Unspecified,
     ) =
-        MaterialTheme.typography.labelSmall +
+        MaterialTheme.typography.arcMedium +
             TextStyle(color = color, background = background, fontSize = fontSize)
 
     /**

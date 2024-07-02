@@ -197,6 +197,8 @@ public final class VideoCapture<T extends VideoOutput> extends UseCase {
     private boolean mHasCompensatingTransformation = false;
     @Nullable
     private SourceStreamRequirementObserver mSourceStreamRequirementObserver;
+    @Nullable
+    private SessionConfig.CloseableErrorListener mCloseableErrorListener;
 
     /**
      * Create a VideoCapture associated with the given {@link VideoOutput}.
@@ -335,16 +337,18 @@ public final class VideoCapture<T extends VideoOutput> extends UseCase {
     @RestrictTo(Scope.LIBRARY_GROUP)
     @NonNull
     @Override
-    protected StreamSpec onSuggestedStreamSpecUpdated(@NonNull StreamSpec suggestedStreamSpec) {
-        Logger.d(TAG, "onSuggestedStreamSpecUpdated: " + suggestedStreamSpec);
+    protected StreamSpec onSuggestedStreamSpecUpdated(
+            @NonNull StreamSpec primaryStreamSpec,
+            @Nullable StreamSpec secondaryStreamSpec) {
+        Logger.d(TAG, "onSuggestedStreamSpecUpdated: " + primaryStreamSpec);
         VideoCaptureConfig<T> config = (VideoCaptureConfig<T>) getCurrentConfig();
         List<Size> customOrderedResolutions = config.getCustomOrderedResolutions(null);
         if (customOrderedResolutions != null
-                && !customOrderedResolutions.contains(suggestedStreamSpec.getResolution())) {
-            Logger.w(TAG, "suggested resolution " + suggestedStreamSpec.getResolution()
+                && !customOrderedResolutions.contains(primaryStreamSpec.getResolution())) {
+            Logger.w(TAG, "suggested resolution " + primaryStreamSpec.getResolution()
                     + " is not in custom ordered resolutions " + customOrderedResolutions);
         }
-        return suggestedStreamSpec;
+        return primaryStreamSpec;
     }
 
     /**
@@ -389,11 +393,11 @@ public final class VideoCapture<T extends VideoOutput> extends UseCase {
         StreamSpec attachedStreamSpec = Preconditions.checkNotNull(getAttachedStreamSpec());
         mStreamInfo = fetchObservableValue(getOutput().getStreamInfo(),
                 StreamInfo.STREAM_INFO_ANY_INACTIVE);
-        mSessionConfigBuilder = createPipeline(getCameraId(),
+        mSessionConfigBuilder = createPipeline(
                 (VideoCaptureConfig<T>) getCurrentConfig(), attachedStreamSpec);
         applyStreamInfoAndStreamSpecToSessionConfigBuilder(mSessionConfigBuilder, mStreamInfo,
                 attachedStreamSpec);
-        updateSessionConfig(mSessionConfigBuilder.build());
+        updateSessionConfig(List.of(mSessionConfigBuilder.build()));
         // VideoCapture has to be active to apply SessionConfig's template type.
         notifyActive();
         getOutput().getStreamInfo().addObserver(CameraXExecutors.mainThreadExecutor(),
@@ -461,7 +465,7 @@ public final class VideoCapture<T extends VideoOutput> extends UseCase {
     @RestrictTo(Scope.LIBRARY_GROUP)
     protected StreamSpec onSuggestedStreamSpecImplementationOptionsUpdated(@NonNull Config config) {
         mSessionConfigBuilder.addImplementationOptions(config);
-        updateSessionConfig(mSessionConfigBuilder.build());
+        updateSessionConfig(List.of(mSessionConfigBuilder.build()));
         return requireNonNull(getAttachedStreamSpec()).toBuilder()
                 .setImplementationOptions(config).build();
     }
@@ -609,7 +613,7 @@ public final class VideoCapture<T extends VideoOutput> extends UseCase {
     @SuppressLint("WrongConstant")
     @MainThread
     @NonNull
-    private SessionConfig.Builder createPipeline(@NonNull String cameraId,
+    private SessionConfig.Builder createPipeline(
             @NonNull VideoCaptureConfig<T> config,
             @NonNull StreamSpec streamSpec) {
         Threads.checkMainThread();
@@ -701,8 +705,12 @@ public final class VideoCapture<T extends VideoOutput> extends UseCase {
         // default if unresolved).
         sessionConfigBuilder.setExpectedFrameRateRange(streamSpec.getExpectedFrameRateRange());
         sessionConfigBuilder.setVideoStabilization(config.getVideoStabilizationMode());
-        sessionConfigBuilder.addErrorListener(
-                (sessionConfig, error) -> resetPipeline(cameraId, config, streamSpec));
+        if (mCloseableErrorListener != null) {
+            mCloseableErrorListener.close();
+        }
+        mCloseableErrorListener = new SessionConfig.CloseableErrorListener(
+                (sessionConfig, error) -> resetPipeline());
+        sessionConfigBuilder.setErrorListener(mCloseableErrorListener);
         if (streamSpec.getImplementationOptions() != null) {
             sessionConfigBuilder.addImplementationOptions(streamSpec.getImplementationOptions());
         }
@@ -726,6 +734,12 @@ public final class VideoCapture<T extends VideoOutput> extends UseCase {
     private void clearPipeline() {
         Threads.checkMainThread();
 
+        // Closes the old error listener
+        if (mCloseableErrorListener != null) {
+            mCloseableErrorListener.close();
+            mCloseableErrorListener = null;
+        }
+
         if (mDeferrableSurface != null) {
             mDeferrableSurface.close();
             mDeferrableSurface = null;
@@ -746,23 +760,21 @@ public final class VideoCapture<T extends VideoOutput> extends UseCase {
     }
 
     @MainThread
-    @SuppressWarnings("WeakerAccess") /* synthetic accessor */
-    void resetPipeline(@NonNull String cameraId,
-            @NonNull VideoCaptureConfig<T> config,
-            @NonNull StreamSpec streamSpec) {
-        clearPipeline();
-
-        // Ensure the attached camera has not changed before resetting.
-        // TODO(b/143915543): Ensure this never gets called by a camera that is not attached
-        //  to this use case so we don't need to do this check.
-        if (isCurrentCamera(cameraId)) {
-            // Only reset the pipeline when the bound camera is the same.
-            mSessionConfigBuilder = createPipeline(cameraId, config, streamSpec);
-            applyStreamInfoAndStreamSpecToSessionConfigBuilder(mSessionConfigBuilder, mStreamInfo,
-                    streamSpec);
-            updateSessionConfig(mSessionConfigBuilder.build());
-            notifyReset();
+    @SuppressWarnings({"WeakerAccess", "unchecked"}) /* synthetic accessor */
+    void resetPipeline() {
+        // Do nothing when the use case has been unbound.
+        if (getCamera() == null) {
+            return;
         }
+
+        clearPipeline();
+        mSessionConfigBuilder = createPipeline(
+                (VideoCaptureConfig<T>) getCurrentConfig(),
+                Preconditions.checkNotNull(getAttachedStreamSpec()));
+        applyStreamInfoAndStreamSpecToSessionConfigBuilder(mSessionConfigBuilder, mStreamInfo,
+                getAttachedStreamSpec());
+        updateSessionConfig(List.of(mSessionConfigBuilder.build()));
+        notifyReset();
     }
 
     /**
@@ -852,8 +864,7 @@ public final class VideoCapture<T extends VideoOutput> extends UseCase {
                 // requested.
                 // 2. The in-progress transformation info becomes null, which means a recording
                 // has been finalized, and there's an existing compensating transformation.
-                resetPipeline(getCameraId(), (VideoCaptureConfig<T>) getCurrentConfig(),
-                        Preconditions.checkNotNull(getAttachedStreamSpec()));
+                resetPipeline();
             } else if ((currentStreamInfo.getId() != STREAM_ID_ERROR
                     && streamInfo.getId() == STREAM_ID_ERROR)
                     || (currentStreamInfo.getId() == STREAM_ID_ERROR
@@ -863,13 +874,13 @@ public final class VideoCapture<T extends VideoOutput> extends UseCase {
                 applyStreamInfoAndStreamSpecToSessionConfigBuilder(mSessionConfigBuilder,
                         streamInfo,
                         attachedStreamSpec);
-                updateSessionConfig(mSessionConfigBuilder.build());
+                updateSessionConfig(List.of(mSessionConfigBuilder.build()));
                 notifyReset();
             } else if (currentStreamInfo.getStreamState() != streamInfo.getStreamState()) {
                 applyStreamInfoAndStreamSpecToSessionConfigBuilder(mSessionConfigBuilder,
                         streamInfo,
                         attachedStreamSpec);
-                updateSessionConfig(mSessionConfigBuilder.build());
+                updateSessionConfig(List.of(mSessionConfigBuilder.build()));
                 notifyUpdated();
             }
         }

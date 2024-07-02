@@ -15,6 +15,10 @@ package androidx.wear.compose.material3 {
     method @RequiresApi(31) @androidx.compose.runtime.Composable public static androidx.wear.compose.material3.AnimatedTextFontRegistry rememberAnimatedTextFontRegistry(androidx.compose.ui.text.font.FontVariation.Settings startFontVariationSettings, androidx.compose.ui.text.font.FontVariation.Settings endFontVariationSettings, optional androidx.compose.ui.text.TextStyle textStyle, optional long startFontSize, optional long endFontSize);
   }
 
+  public final class AppScaffoldKt {
+    method @androidx.compose.runtime.Composable public static void AppScaffold(optional androidx.compose.ui.Modifier modifier, optional kotlin.jvm.functions.Function0<kotlin.Unit> timeText, kotlin.jvm.functions.Function1<? super androidx.compose.foundation.layout.BoxScope,kotlin.Unit> content);
+  }
+
   @androidx.compose.runtime.Immutable public final class ButtonColors {
     ctor public ButtonColors(androidx.compose.ui.graphics.painter.Painter containerPainter, long contentColor, long secondaryContentColor, long iconColor, androidx.compose.ui.graphics.painter.Painter disabledContainerPainter, long disabledContentColor, long disabledSecondaryContentColor, long disabledIconColor);
     ctor public ButtonColors(long containerColor, long contentColor, long secondaryContentColor, long iconColor, long disabledContainerColor, long disabledContentColor, long disabledSecondaryContentColor, long disabledIconColor);
@@ -52,6 +56,10 @@ package androidx.wear.compose.material3 {
     method public androidx.compose.foundation.layout.PaddingValues getCompactButtonTapTargetPadding();
     method public float getCompactButtonVerticalPadding();
     method public androidx.compose.foundation.layout.PaddingValues getContentPadding();
+    method public float getEdgeButtonHeightExtraSmall();
+    method public float getEdgeButtonHeightLarge();
+    method public float getEdgeButtonHeightMedium();
+    method public float getEdgeButtonHeightSmall();
     method public float getHeight();
     method public float getIconSize();
     method public float getLargeIconSize();
@@ -69,6 +77,10 @@ package androidx.wear.compose.material3 {
     property public final androidx.compose.foundation.layout.PaddingValues CompactButtonTapTargetPadding;
     property public final float CompactButtonVerticalPadding;
     property public final androidx.compose.foundation.layout.PaddingValues ContentPadding;
+    property public final float EdgeButtonHeightExtraSmall;
+    property public final float EdgeButtonHeightLarge;
+    property public final float EdgeButtonHeightMedium;
+    property public final float EdgeButtonHeightSmall;
     property public final float Height;
     property public final float IconSize;
     property public final float LargeIconSize;
@@ -274,6 +286,10 @@ package androidx.wear.compose.material3 {
 
   public final class CurvedTextKt {
     method public static void curvedText(androidx.wear.compose.foundation.CurvedScope, String text, optional androidx.wear.compose.foundation.CurvedModifier modifier, optional float maxSweepAngle, optional long background, optional long color, optional long fontSize, optional androidx.compose.ui.text.font.FontFamily? fontFamily, optional androidx.compose.ui.text.font.FontWeight? fontWeight, optional androidx.compose.ui.text.font.FontStyle? fontStyle, optional androidx.compose.ui.text.font.FontSynthesis? fontSynthesis, optional androidx.wear.compose.foundation.CurvedTextStyle? style, optional androidx.wear.compose.foundation.CurvedDirection.Angular? angularDirection, optional int overflow);
+  }
+
+  public final class EdgeButtonKt {
+    method @androidx.compose.runtime.Composable public static void EdgeButton(kotlin.jvm.functions.Function0<kotlin.Unit> onClick, optional androidx.compose.ui.Modifier modifier, optional float buttonHeight, optional boolean enabled, optional androidx.wear.compose.material3.ButtonColors colors, optional androidx.compose.foundation.BorderStroke? border, optional androidx.compose.foundation.interaction.MutableInteractionSource? interactionSource, kotlin.jvm.functions.Function1<? super androidx.compose.foundation.layout.RowScope,kotlin.Unit> content);
   }
 
   @SuppressCompatibility @kotlin.RequiresOptIn(message="This Wear Material3 API is experimental and is likely to change or to be removed in" + " the future.") @kotlin.annotation.Retention(kotlin.annotation.AnnotationRetention.BINARY) public @interface ExperimentalWearMaterial3Api {
@@ -611,6 +627,23 @@ package androidx.wear.compose.material3 {
   public final class RippleKt {
     method @androidx.compose.runtime.Stable public static androidx.compose.foundation.IndicationNodeFactory ripple(androidx.compose.ui.graphics.ColorProducer color, optional boolean bounded, optional float radius);
     method @androidx.compose.runtime.Stable public static androidx.compose.foundation.IndicationNodeFactory ripple(optional boolean bounded, optional float radius, optional long color);
+  }
+
+  public final class ScreenScaffoldKt {
+    method @androidx.compose.runtime.Composable public static void ScreenScaffold(androidx.compose.foundation.lazy.LazyListState scrollState, optional androidx.compose.ui.Modifier modifier, optional kotlin.jvm.functions.Function0<kotlin.Unit>? timeText, optional kotlin.jvm.functions.Function1<? super androidx.compose.foundation.layout.BoxScope,kotlin.Unit>? scrollIndicator, kotlin.jvm.functions.Function1<? super androidx.compose.foundation.layout.BoxScope,kotlin.Unit> content);
+    method @androidx.compose.runtime.Composable public static void ScreenScaffold(androidx.compose.foundation.ScrollState scrollState, optional androidx.compose.ui.Modifier modifier, optional kotlin.jvm.functions.Function0<kotlin.Unit>? timeText, optional kotlin.jvm.functions.Function1<? super androidx.compose.foundation.layout.BoxScope,kotlin.Unit>? scrollIndicator, kotlin.jvm.functions.Function1<? super androidx.compose.foundation.layout.BoxScope,kotlin.Unit> content);
+    method @androidx.compose.runtime.Composable public static void ScreenScaffold(optional androidx.compose.ui.Modifier modifier, optional kotlin.jvm.functions.Function0<kotlin.Unit>? timeText, optional androidx.wear.compose.foundation.ScrollInfoProvider? scrollInfoProvider, optional kotlin.jvm.functions.Function1<? super androidx.compose.foundation.layout.BoxScope,kotlin.Unit>? scrollIndicator, kotlin.jvm.functions.Function1<? super androidx.compose.foundation.layout.BoxScope,kotlin.Unit> content);
+    method @androidx.compose.runtime.Composable public static void ScreenScaffold(androidx.wear.compose.foundation.lazy.ScalingLazyListState scrollState, optional androidx.compose.ui.Modifier modifier, optional kotlin.jvm.functions.Function0<kotlin.Unit>? timeText, optional kotlin.jvm.functions.Function1<? super androidx.compose.foundation.layout.BoxScope,kotlin.Unit>? scrollIndicator, kotlin.jvm.functions.Function1<? super androidx.compose.foundation.layout.BoxScope,kotlin.Unit> content);
+  }
+
+  public enum ScreenStage {
+    enum_constant public static final androidx.wear.compose.material3.ScreenStage Idle;
+    enum_constant public static final androidx.wear.compose.material3.ScreenStage New;
+    enum_constant public static final androidx.wear.compose.material3.ScreenStage Scrolling;
+  }
+
+  public final class ScrollAwayKt {
+    method public static androidx.compose.ui.Modifier scrollAway(androidx.compose.ui.Modifier, androidx.wear.compose.foundation.ScrollInfoProvider scrollInfoProvider, kotlin.jvm.functions.Function0<? extends androidx.wear.compose.material3.ScreenStage> screenStage);
   }
 
   public final class ScrollIndicatorDefaults {

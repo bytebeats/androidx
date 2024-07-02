@@ -410,10 +410,28 @@ internal class AndroidComposeView(context: Context, coroutineContext: CoroutineC
 
     private val canvasHolder = CanvasHolder()
 
+    // Backed by mutableStateOf so that the ambient provider recomposes when it changes
+    override var layoutDirection by
+        mutableStateOf(
+            // We don't use the attached View's layout direction here since that layout direction
+            // may not
+            // be resolved since composables may be composed without attaching to the RootViewImpl.
+            // In Jetpack Compose, use the locale layout direction (i.e. layoutDirection came from
+            // configuration) as a default layout direction.
+            toLayoutDirection(context.resources.configuration.layoutDirection)
+                ?: LayoutDirection.Ltr
+        )
+        private set
+
+    override val viewConfiguration: ViewConfiguration =
+        AndroidViewConfiguration(android.view.ViewConfiguration.get(context))
+
     override val root =
         LayoutNode().also {
             it.measurePolicy = RootMeasurePolicy
             it.density = density
+            it.layoutDirection = layoutDirection
+            it.viewConfiguration = viewConfiguration
             // Composed modifiers cannot be added here directly
             it.modifier =
                 Modifier.then(semanticsModifier)
@@ -528,9 +546,6 @@ internal class AndroidComposeView(context: Context, coroutineContext: CoroutineC
     override val measureIteration: Long
         get() = measureAndLayoutDelegate.measureIteration
 
-    override val viewConfiguration: ViewConfiguration =
-        AndroidViewConfiguration(android.view.ViewConfiguration.get(context))
-
     override val hasPendingMeasureOrLayout
         get() = measureAndLayoutDelegate.hasPendingMeasureOrLayout
 
@@ -636,19 +651,6 @@ internal class AndroidComposeView(context: Context, coroutineContext: CoroutineC
 
     private val Configuration.fontWeightAdjustmentCompat: Int
         get() = if (SDK_INT >= S) fontWeightAdjustment else 0
-
-    // Backed by mutableStateOf so that the ambient provider recomposes when it changes
-    override var layoutDirection by
-        mutableStateOf(
-            // We don't use the attached View's layout direction here since that layout direction
-            // may not
-            // be resolved since composables may be composed without attaching to the RootViewImpl.
-            // In Jetpack Compose, use the locale layout direction (i.e. layoutDirection came from
-            // configuration) as a default layout direction.
-            toLayoutDirection(context.resources.configuration.layoutDirection)
-                ?: LayoutDirection.Ltr
-        )
-        private set
 
     /** Provide haptic feedback to the user. Use the Android version of haptic feedback. */
     override val hapticFeedBack: HapticFeedback = PlatformHapticFeedback(this)
@@ -818,12 +820,12 @@ internal class AndroidComposeView(context: Context, coroutineContext: CoroutineC
     }
 
     /**
-     * Avoid Android 8 crash by not traversing assist structure. Autofill assistStructure will be
-     * dispatched via `dispatchProvideAutofillStructure`, not this method. See b/251152083 for more
-     * details.
+     * Avoid crash by not traversing assist structure. Autofill assistStructure will be dispatched
+     * via `dispatchProvideAutofillStructure` from Android 8 and on. See b/251152083 and b/320768586
+     * more details.
      */
     override fun dispatchProvideStructure(structure: ViewStructure) {
-        if (SDK_INT == 26 || SDK_INT == 27) {
+        if (SDK_INT in 23..27) {
             AndroidComposeViewAssistHelperMethodsO.setClassName(structure, view)
         } else {
             super.dispatchProvideStructure(structure)

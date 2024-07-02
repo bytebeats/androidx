@@ -189,7 +189,7 @@ package androidx.compose.runtime {
 
   public static final class Composer.Companion {
     method public Object getEmpty();
-    method @SuppressCompatibility @androidx.compose.runtime.InternalComposeTracingApi public void setTracer(androidx.compose.runtime.CompositionTracer tracer);
+    method @SuppressCompatibility @androidx.compose.runtime.InternalComposeTracingApi public void setTracer(androidx.compose.runtime.CompositionTracer? tracer);
     property public final Object Empty;
   }
 
@@ -1135,7 +1135,7 @@ package androidx.compose.runtime.tooling {
   }
 
   @SuppressCompatibility @androidx.compose.runtime.ExperimentalComposeRuntimeApi public interface CompositionObserver {
-    method public void onBeginComposition(androidx.compose.runtime.Composition composition, java.util.Map<androidx.compose.runtime.RecomposeScope,? extends java.util.Set<?>?> invalidationMap);
+    method public void onBeginComposition(androidx.compose.runtime.Composition composition, java.util.Map<androidx.compose.runtime.RecomposeScope,? extends java.util.Set<?>> invalidationMap);
     method public void onEndComposition(androidx.compose.runtime.Composition composition);
   }
 

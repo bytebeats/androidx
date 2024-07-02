@@ -25,10 +25,12 @@ import androidx.wear.compose.integration.demos.common.Material3DemoCategory
 import androidx.wear.compose.material3.samples.AnimatedTextSample
 import androidx.wear.compose.material3.samples.AnimatedTextSampleButtonResponse
 import androidx.wear.compose.material3.samples.AnimatedTextSampleSharedFontRegistry
+import androidx.wear.compose.material3.samples.EdgeButtonSample
 import androidx.wear.compose.material3.samples.EdgeSwipeForSwipeToDismiss
 import androidx.wear.compose.material3.samples.FixedFontSize
 import androidx.wear.compose.material3.samples.HorizontalPageIndicatorSample
 import androidx.wear.compose.material3.samples.HorizontalPageIndicatorWithPagerSample
+import androidx.wear.compose.material3.samples.ScaffoldSample
 import androidx.wear.compose.material3.samples.SimpleSwipeToDismissBox
 import androidx.wear.compose.material3.samples.StatefulSwipeToDismissBox
 import androidx.wear.compose.material3.samples.StepperSample
@@ -39,9 +41,19 @@ val WearMaterial3Demos =
     Material3DemoCategory(
         "Material 3",
         listOf(
+            ComposableDemo("Scaffold") { ScaffoldSample() },
+            Material3DemoCategory("ScrollAway", ScrollAwayDemos),
             Material3DemoCategory(
                 "Button",
                 listOf(
+                    Material3DemoCategory(
+                        "Edge Button",
+                        listOf(
+                            ComposableDemo("Simple Edge Button") { EdgeButtonSample() },
+                            ComposableDemo("Edge Button Sizes") { EdgeButtonSizeDemo() },
+                            ComposableDemo("Edge Button Below List") { EdgeButtonBelowListDemo() },
+                        )
+                    ),
                     ComposableDemo("Button") { ButtonDemo() },
                     ComposableDemo("Filled Tonal Button") { FilledTonalButtonDemo() },
                     ComposableDemo("Outlined Button") { OutlinedButtonDemo() },
